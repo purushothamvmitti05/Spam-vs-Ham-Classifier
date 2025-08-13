@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spam vs Ham Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .message-input {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #e0e0e0;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-ham {
+            background: linear-gradient(135deg, #51cf66, #40c057);
+            color: white;
+        }
+
+        .result-spam {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+
+        .result-neutral {
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            color: #6c757d;
+        }
+
+        .result-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .result-confidence {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .examples-section {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .examples-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .examples-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .example-card {
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .example-ham {
+            background: linear-gradient(135deg, rgba(81, 207, 102, 0.1), rgba(64, 192, 87, 0.1));
+        }
+
+        .example-spam {
+            background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(238, 90, 82, 0.1));
+        }
+
+        .example-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+
+        .example-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .ham-label { color: #40c057; }
+        .spam-label { color: #ee5a52; }
+
+        .feature-indicators {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .feature-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .feature-tag {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .feature-spam {
+            background: rgba(255, 107, 107, 0.2);
+            color: #c92a2a;
+        }
+
+        .feature-ham {
+            background: rgba(81, 207, 102, 0.2);
+            color: #2b8a3e;
+        }
+
+        @media (max-width: 768px) {
+            .examples-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Spam vs Ham Classifier</h1>
+            <p>Intelligent SMS and Email spam detection for everyone</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="input-section">
+                <label for="messageInput">Enter your message to analyze:</label>
+                <textarea 
+                    id="messageInput" 
+                    class="message-input" 
+                    placeholder="Type or paste your SMS/email message here..."
+                ></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="classifyMessage()">🔍 Analyze Message</button>
+                <button class="btn btn-secondary" onclick="clearAll()">🗑️ Clear All</button>
+            </div>
+            
+            <div id="resultSection" class="result-section result-neutral">
+                <div class="result-title">Ready to analyze!</div>
+                <div class="result-confidence">Enter a message above and click "Analyze Message"</div>
+            </div>
+            
+            <div id="featureSection" class="feature-indicators" style="display: none;">
+                <div class="feature-title">🔍 Detected Features:</div>
+                <div id="featureList" class="feature-list"></div>
+            </div>
+            
+            <div class="examples-section">
+                <div class="examples-title">📝 Try These Examples:</div>
+                <div class="examples-grid">
+                    <div class="example-card example-ham" onclick="useExample(this)">
+                        <div class="example-label ham-label">✅ Ham (Legitimate)</div>
+                        <div>Hey, are we still meeting for lunch tomorrow at 12:30? Let me know if you need to reschedule.</div>
+                    </div>
+                    
+                    <div class="example-card example-spam" onclick="useExample(this)">
+                        <div class="example-label spam-label">🚫 Spam</div>
+                        <div>URGENT! You've won $5000! Click here NOW to claim your prize before it expires! Limited time offer!</div>
+                    </div>
+                    
+                    <div class="example-card example-ham" onclick="useExample(this)">
+                        <div class="example-label ham-label">✅ Ham (Legitimate)</div>
+                        <div>Your appointment with Dr. Smith is confirmed for Friday at 3 PM. Please arrive 15 minutes early.</div>
+                    </div>
+                    
+                    <div class="example-card example-spam" onclick="useExample(this)">
+                        <div class="example-label spam-label">🚫 Spam</div>
+                        <div>FREE MONEY! No credit check needed! Apply now for instant cash loan. Text STOP to opt out.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Spam keywords and patterns
+        const spamKeywords = [
+            'free', 'urgent', 'limited time', 'act now', 'click here', 'winner', 'congratulations',
+            'cash', 'money', 'loan', 'credit', 'prize', 'offer expires', 'guarantee',
+            'no obligation', 'risk free', 'call now', 'don\'t miss', 'exclusive deal',
+            'amazing deal', 'special promotion', 'limited offer', 'act fast', 'hurry',
+            'instant', 'immediate', 'urgent response', 'time sensitive', 'expires today',
+            'bonus', 'reward', 'gift', 'promotion', 'discount', 'save money'
+        ];
+
+        const spamPatterns = [
+            /\$\d+/g,  // Dollar amounts
+            /\b\d{3}-\d{3}-\d{4}\b/g,  // Phone numbers
+            /click here/gi,
+            /call now/gi,
+            /text stop/gi,
+            /opt out/gi,
+            /URGENT|ASAP/gi,
+            /FREE|Win/gi,
+            /LIMITED TIME/gi,
+            /Act now/gi
+        ];
+
+        function classifyMessage() {
+            const message = document.getElementById('messageInput').value.trim();
+            
+            if (!message) {
+                showResult('neutral', 'Please enter a message to analyze', 0);
+                return;
+            }
+
+            const result = analyzeMessage(message);
+            showResult(result.type, result.message, result.confidence);
+            showFeatures(result.features);
+        }
+
+        function analyzeMessage(message) {
+            const lowerMessage = message.toLowerCase();
+            let spamScore = 0;
+            const detectedFeatures = [];
+
+            // Check for spam keywords
+            spamKeywords.forEach(keyword => {
+                if (lowerMessage.includes(keyword.toLowerCase())) {
+                    spamScore += 10;
+                    detectedFeatures.push({
+                        text: `Keyword: "${keyword}"`,
+                        type: 'spam'
+                    });
+                }
+            });
+
+            // Check for spam patterns
+            spamPatterns.forEach(pattern => {
+                const matches = message.match(pattern);
+                if (matches) {
+                    spamScore += 15;
+                    matches.forEach(match => {
+                        detectedFeatures.push({
+                            text: `Pattern: "${match}"`,
+                            type: 'spam'
+                        });
+                    });
+                }
+            });
+
+            // Check for excessive punctuation
+            if (message.match(/[!]{2,}/g)) {
+                spamScore += 8;
+                detectedFeatures.push({
+                    text: 'Excessive exclamation marks',
+                    type: 'spam'
+                });
+            }
+
+            // Check for all caps
+            if (message.match(/[A-Z]{10,}/g)) {
+                spamScore += 12;
+                detectedFeatures.push({
+                    text: 'Excessive capitalization',
+                    type: 'spam'
+                });
+            }
+
+            // Check for legitimate indicators
+            const hamIndicators = [
+                'meeting', 'appointment', 'schedule', 'reminder', 'thank you',
+                'please', 'regards', 'sincerely', 'best', 'confirmed'
+            ];
+
+            hamIndicators.forEach(indicator => {
+                if (lowerMessage.includes(indicator)) {
+                    spamScore -= 8;
+                    detectedFeatures.push({
+                        text: `Legitimate word: "${indicator}"`,
+                        type: 'ham'
+                    });
+                }
+            });
+
+            // Calculate confidence
+            const confidence = Math.min(95, Math.max(55, Math.abs(spamScore) + 50));
+            
+            // Determine result
+            if (spamScore > 20) {
+                return {
+                    type: 'spam',
+                    message: `🚫 This message appears to be SPAM`,
+                    confidence: confidence,
+                    features: detectedFeatures
+                };
+            } else if (spamScore < -10) {
+                return {
+                    type: 'ham',
+                    message: `✅ This message appears to be LEGITIMATE (Ham)`,
+                    confidence: confidence,
+                    features: detectedFeatures
+                };
+            } else {
+                return {
+                    type: spamScore > 0 ? 'spam' : 'ham',
+                    message: spamScore > 0 ? 
+                        `⚠️ This message might be SPAM` : 
+                        `✅ This message appears to be LEGITIMATE (Ham)`,
+                    confidence: Math.max(55, confidence - 20),
+                    features: detectedFeatures
+                };
+            }
+        }
+
+        function showResult(type, message, confidence) {
+            const resultSection = document.getElementById('resultSection');
+            
+            // Remove existing classes
+            resultSection.className = 'result-section';
+            
+            // Add appropriate class
+            if (type === 'spam') {
+                resultSection.classList.add('result-spam');
+            } else if (type === 'ham') {
+                resultSection.classList.add('result-ham');
+            } else {
+                resultSection.classList.add('result-neutral');
+            }
+            
+            resultSection.innerHTML = `
+                <div class="result-title">${message}</div>
+                <div class="result-confidence">Confidence: ${Math.round(confidence)}%</div>
+            `;
+        }
+
+        function showFeatures(features) {
+            const featureSection = document.getElementById('featureSection');
+            const featureList = document.getElementById('featureList');
+            
+            if (features && features.length > 0) {
+                featureSection.style.display = 'block';
+                featureList.innerHTML = features.map(feature => 
+                    `<span class="feature-tag feature-${feature.type}">${feature.text}</span>`
+                ).join('');
+            } else {
+                featureSection.style.display = 'none';
+            }
+        }
+
+        function useExample(element) {
+            const messageText = element.querySelector('div:not(.example-label)').textContent;
+            document.getElementById('messageInput').value = messageText;
+            
+            // Add visual feedback
+            element.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                element.style.transform = '';
+            }, 150);
+        }
+
+        function clearAll() {
+            document.getElementById('messageInput').value = '';
+            showResult('neutral', 'Ready to analyze!', 0);
+            document.getElementById('featureSection').style.display = 'none';
+        }
+
+        // Add some interactive effects
+        document.getElementById('messageInput').addEventListener('input', function() {
+            if (this.value.trim()) {
+                this.style.borderColor = '#667eea';
+            } else {
+                this.style.borderColor = '#e0e0e0';
+            }
+        });
+    </script>
+</body>
+</html>
